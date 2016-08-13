@@ -3,6 +3,7 @@ package pgx_test
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -151,6 +152,74 @@ func TestPoolAcquireAndReleaseCycle(t *testing.T) {
 	}
 
 	releaseAllConnections(pool, allConnections)
+}
+
+func TestPoolNonBlockingConnections(t *testing.T) {
+	t.Parallel()
+
+	var dialCountLock sync.Mutex
+	dialCount := 0
+	openTimeout := 1 * time.Second
+	testDialer := func(network, address string) (net.Conn, error) {
+		var firstDial bool
+		dialCountLock.Lock()
+		dialCount++
+		firstDial = dialCount == 1
+		dialCountLock.Unlock()
+
+		if firstDial {
+			return net.Dial(network, address)
+		} else {
+			time.Sleep(openTimeout)
+			return nil, &net.OpError{Op: "dial", Net: "tcp"}
+		}
+	}
+
+	maxConnections := 3
+	config := pgx.ConnPoolConfig{
+		ConnConfig:     *defaultConnConfig,
+		MaxConnections: maxConnections,
+	}
+	config.ConnConfig.Dial = testDialer
+
+	pool, err := pgx.NewConnPool(config)
+	if err != nil {
+		t.Fatalf("Expected NewConnPool not to fail, instead it failed with: %v", err)
+	}
+	defer pool.Close()
+
+	// NewConnPool establishes an initial connection
+	// so we need to close that for the rest of the test
+	if conn, err := pool.Acquire(); err == nil {
+		conn.Close()
+		pool.Release(conn)
+	} else {
+		t.Fatalf("pool.Acquire unexpectedly failed: %v", err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(maxConnections)
+
+	startedAt := time.Now()
+	for i := 0; i < maxConnections; i++ {
+		go func() {
+			_, err := pool.Acquire()
+			wg.Done()
+			if err == nil {
+				t.Fatal("Acquire() expected to fail but it did not")
+			}
+		}()
+	}
+	wg.Wait()
+
+	// Prior to createConnectionUnlocked() use the test took
+	// maxConnections * openTimeout seconds to complete.
+	// With createConnectionUnlocked() it takes ~ 1 * openTimeout seconds.
+	timeTaken := time.Now().Sub(startedAt)
+	if timeTaken > openTimeout+1*time.Second {
+		t.Fatalf("Expected all Acquire() to run in parallel and take about %v, instead it took '%v'", openTimeout, timeTaken)
+	}
+
 }
 
 func TestAcquireTimeoutSanity(t *testing.T) {
