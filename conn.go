@@ -111,6 +111,19 @@ func (ct CommandTag) RowsAffected() int64 {
 	return n
 }
 
+// Identifier a PostgreSQL identifier or name. Identifiers can be composed of
+// multiple parts such as ["schema", "table"] or ["table", "column"].
+type Identifier []string
+
+// Sanitize returns a sanitized string safe for SQL interpolation.
+func (ident Identifier) Sanitize() string {
+	parts := make([]string, len(ident))
+	for i := range ident {
+		parts[i] = `"` + strings.Replace(ident[i], `"`, `""`, -1) + `"`
+	}
+	return strings.Join(parts, ".")
+}
+
 // ErrNoRows occurs when rows are expected but none are returned.
 var ErrNoRows = errors.New("no rows in result set")
 
@@ -445,7 +458,9 @@ func ParseURI(uri string) (ConnConfig, error) {
 
 		cp.RuntimeParams[k] = v[0]
 	}
-
+	if cp.Password == "" {
+		pgpass(&cp)
+	}
 	return cp, nil
 }
 
@@ -498,8 +513,19 @@ func ParseDSN(s string) (ConnConfig, error) {
 	if err != nil {
 		return cp, err
 	}
-
+	if cp.Password == "" {
+		pgpass(&cp)
+	}
 	return cp, nil
+}
+
+// ParseConnectionString parses either a URI or a DSN connection string.
+// see ParseURI and ParseDSN for details.
+func ParseConnectionString(s string) (ConnConfig, error) {
+	if strings.HasPrefix(s, "postgres://") || strings.HasPrefix(s, "postgresql://") {
+		return ParseURI(s)
+	}
+	return ParseDSN(s)
 }
 
 // ParseEnvLibpq parses the environment like libpq does into a ConnConfig
@@ -561,7 +587,9 @@ func ParseEnvLibpq() (ConnConfig, error) {
 	if appname := os.Getenv("PGAPPNAME"); appname != "" {
 		cc.RuntimeParams["application_name"] = appname
 	}
-
+	if cc.Password == "" {
+		pgpass(&cc)
+	}
 	return cc, nil
 }
 

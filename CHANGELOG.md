@@ -2,6 +2,18 @@
 
 ## Fixes
 
+* Fix race with concurrent execution of stdlib.OpenFromConnPool (Terin Stock)
+
+## Features
+
+* .pgpass support (j7b)
+* Add missing CopyFrom delegators to Tx and ConnPool (Jack Christensen)
+* Add ParseConnectionString (James Lawrence)
+
+# 2.10.0 (March 17, 2017)
+
+## Fixes
+
 * Oid underlying type changed to uint32, previously it was incorrectly int32 (Manni Wood)
 * Explicitly close checked-in connections on ConnPool.Reset, previously they were closed by GC
 
@@ -16,10 +28,12 @@
 * Add named error ErrAcquireTimeout (Alexander Staubo)
 * Add logical replication decoding (Kris Wehner)
 * Add PgxScanner interface to allow types to simultaneously support database/sql and pgx (Jack Christensen)
+* Add CopyFrom with schema support (Jack Christensen)
 
 ## Compatibility
 
 * jsonb now defaults to binary format. This means passing a []byte to a jsonb column will no longer work.
+* CopyTo is now deprecated but will continue to work.
 
 # 2.9.0 (August 26, 2016)
 
