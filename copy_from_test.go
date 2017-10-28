@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/silviucm/pgx"
 	"github.com/pkg/errors"
 )
 

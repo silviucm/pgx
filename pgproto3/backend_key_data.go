@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 
-	"github.com/jackc/pgx/pgio"
+	"github.com/silviucm/pgx/pgio"
 )
 
 type BackendKeyData struct {

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx"
-	"github.com/jackc/pgx/pgtype"
-	satori "github.com/jackc/pgx/pgtype/ext/satori-uuid"
+	"github.com/silviucm/pgx"
+	"github.com/silviucm/pgx/pgtype"
+	satori "github.com/silviucm/pgx/pgtype/ext/satori-uuid"
 	"github.com/satori/go.uuid"
 	"github.com/shopspring/decimal"
 )
@@ -154,7 +154,7 @@ func TestConnQueryValues(t *testing.T) {
 	}
 }
 
-// https://github.com/jackc/pgx/issues/228
+// https://github.com/silviucm/pgx/issues/228
 func TestRowsScanDoesNotAllowScanningBinaryFormatValuesIntoString(t *testing.T) {
 	t.Parallel()
 

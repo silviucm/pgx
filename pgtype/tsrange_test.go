@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/pgtype"
-	"github.com/jackc/pgx/pgtype/testutil"
+	"github.com/silviucm/pgx/pgtype"
+	"github.com/silviucm/pgx/pgtype/testutil"
 )
 
 func TestTsrangeTranscode(t *testing.T) {

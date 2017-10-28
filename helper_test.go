@@ -3,7 +3,7 @@ package pgx_test
 import (
 	"testing"
 
-	"github.com/jackc/pgx"
+	"github.com/silviucm/pgx"
 )
 
 func mustConnect(t testing.TB, config pgx.ConnConfig) *pgx.Conn {
